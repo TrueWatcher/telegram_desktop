@@ -1,0 +1,83 @@
+
+* {
+  margin: 0;
+  padding: 0;
+  border-collapse: collapse;
+  font-size: 100%;
+}
+
+#dataD {
+  white-space: pre-wrap;
+}
+
+html {
+  background-color: #ccb;
+}
+
+body {
+  background-color: #ccb;
+  color: #000;
+  /*margin: 3% 10%;*/
+  padding: 2% 7% 5% 7%;
+}
+
+a:visited,a:link {
+  color: #642;
+}
+
+a:hover {
+  background-color: #eed;
+}
+
+input,select,button {
+  padding: 0.3em;
+  margin: 0.3em;
+  background-color: #abc;
+  border: 2px solid #842;
+  border-radius: 5px;
+}
+input:hover,select:hover,button:hover {
+  background-color: #eed;
+}
+
+fieldset {
+  padding: 0.5em;
+  margin: 0.1em;
+}
+
+.fr {
+  float: right;
+}
+
+#dialogD {
+  max-width: 75%;
+}
+
+input#textInp {
+  width: 87%;
+}
+
+input#replyToInp {
+  width: 2em;
+}
+
+#buddyListD .buddyName:hover { 
+  background-color: #eed; 
+}
+.ye { 
+  background-color: #eed;
+}
+a.ripe:visited,a.ripe:link {
+  color: #621;
+  font-weight: bold;
+}
+span.unread { 
+  color: #642;
+  background-color: #abc;
+}
+span.undelivered { 
+  background-color: #abc;
+}
+
+
+

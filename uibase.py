@@ -1,0 +1,84 @@
+import datetime
+
+class UiBase():
+  def __init__(self):
+    self.localTimeZone = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
+    # https://stackoverflow.com/questions/1111056/get-time-zone-information-of-the-system-in-python
+    self.year = datetime.datetime.now(self.localTimeZone).year
+    self.dateFormat2 = '%-H:%M'
+    self.dateFormat1 = '%b %-d %-H:%M'
+    self.dateFormat0 = '%Y %b %-d %-H:%M'
+    
+  def presentNames(self, user):
+    fn = '' if not hasattr(user,'first_name') or not user.first_name else user.first_name
+    un = '' if not hasattr(user,'username') or not user.username else user.username
+    ph = '' if not hasattr(user,'phone') or not user.phone else user.phone
+    return f"{fn} / {un} / {ph}"   
+  
+  def repackMessage(self, msg, myid, isUnread = False, mediaLink = '', isDelivered = True):
+    if msg is None: return None
+    r = {}
+    r['isMine'] = hasattr(msg,'from_id') and hasattr(msg.from_id, 'user_id') and msg.from_id.user_id == myid
+    r['prefix'] = '>' if r['isMine'] else '<'
+    r['unread'] = False if r['isMine'] else isUnread
+    r['fwdFrom'] = '' if not (hasattr(msg,'fwd_from') and msg.fwd_from and msg.fwd_from.from_name) else msg.fwd_from.from_name
+    r['id'] = msg.id
+    media = ''
+    if msg.file:
+      fn = 'unknown' if not hasattr(msg.file,"name") or not msg.file.name else msg.file.name
+      media = f"-file: {fn}- "
+    elif hasattr(msg,'media') and msg.media:
+      media = f"-media: {type(msg.media)}- "
+    r['media'] = media
+    r['mediaLink'] = '' if not mediaLink else mediaLink
+    text = ''
+    if hasattr(msg,'message') and isinstance(msg.message, str) and msg.message == '': 
+      text = '-empty-'
+    elif msg.message is None: 
+      text = '-none-'
+    else: 
+      text = msg.message.replace("\n",' ').replace("\r",' ')
+    r['text'] = text
+    action = ''
+    if hasattr(msg,'action') and msg.action:
+      action = f"-action: {type(msg.action)}- "
+    r['action'] = action  
+    date = ''
+    if hasattr(msg,'date') and msg.date:
+      date = self.localize(msg.date)
+    r['date'] = date
+    r['undelivered'] = False if not r['isMine'] else not isDelivered
+    r['replyToId'] = '' if not hasattr(msg,"reply_to") or not msg.reply_to or not hasattr(msg.reply_to,"reply_to_msg_id") or not msg.reply_to.reply_to_msg_id else msg.reply_to.reply_to_msg_id
+    return r
+  
+  def repackMessage2(self, msg, dn, inv):
+    r = self.repackMessage( msg, inv.getMyid(), inv.um.isUnread(dn, msg), inv.mm.getMediaLink(dn, msg.id), inv.um.isDelivered(dn, msg) )
+    return r
+  
+  def localize(self, date):
+    assert date is not None
+    dateToLocal = date.astimezone(self.localTimeZone)
+    return dateToLocal.strftime(self.getDateFormat(dateToLocal))
+  
+  def getDateFormat(self, dateToLocal):
+    if dateToLocal.year != self.year:
+      return self.dateFormat0
+    else:
+      now = datetime.datetime.now(self.localTimeZone)
+      if dateToLocal.month == now.month and dateToLocal.day == now.day:
+        return self.dateFormat2
+      else:
+        return self.dateFormat1
+      
+  def repackDialog(self, dialog, i, inv):
+    r = {}
+    r['i'] = i
+    e = dialog.entity
+    dn = dialog.name
+    r['name'] = dn
+    r['username'] = '' if not hasattr(e,"username") or not e.username else e.username
+    r['count'] = inv.getMessageCount(dn)
+    r['unreadCount'] = inv.um.getUnreadCount(dn)
+    r['hasUndelivered'] = inv.um.hasUndelivered(dn)
+    r['phone'] = '' if not hasattr(e,"phone") or not e.phone else e.phone
+    return r

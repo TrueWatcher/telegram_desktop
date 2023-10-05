@@ -1,0 +1,7 @@
+{
+  "apiId": 1234567890,
+  "apiHash": "abcdefabcdefabcdef",
+  "maxMessages": 30,
+  //"downloadPath": "/home/useruser/Desktop/"  // in the app folder or from / "Downloads/"
+}
+// This is a json5 config file. Enter real Telegram API ID and hash and rename this file to params.json

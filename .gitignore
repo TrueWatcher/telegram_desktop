@@ -1,0 +1,6 @@
+/venv/
+/suppl/
+/Downloads/*
+/__*
+*.json
+*.session

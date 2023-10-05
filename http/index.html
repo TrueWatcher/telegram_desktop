@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>tgtlc, a free Telegram client</title>
+  <link rel="stylesheet" type="text/css" href="css.css" media="all" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.5" />
+</head>
+<body>
+<fieldset id="buddiesFs">
+  <div id="buddyPanel" class="fr">
+    <button id="reloadBuddiesBtn" title="refresh all data">Reload</button>
+    <button id="toggleHideableBtn">More</button>
+  </div>
+  <div id="buddyListD"></div>
+  <p id="alertBlP">Waiting for scripts...</p>
+</fieldset>
+<fieldset id="commandFs" class="hideable">
+  <input type="text" id="actInp" name="act" maxlength="30" placeholder="action" autocomplete="off" />
+  <input type="text" id="arg0Inp" name="arg0" maxlength="100" placeholder="" autocomplete="off" />
+  <input type="text" id="arg1Inp" name="arg1" maxlength="100" placeholder="" autocomplete="off" />
+  <input type="text" id="arg2Inp" name="arg2" maxlength="100" placeholder="" autocomplete="off" />
+  <input type="text" id="arg3Inp" name="arg3" maxlength="100" placeholder="" autocomplete="off" />
+  <button id="sendCmdBtn">Go</button> <button id="clearCmdBtn">Clear</button>
+  <div id="dataD"></div>
+</fieldset>
+
+<fieldset id="dialogFs">
+  <div id="dialogPanel" class="fr">
+    <button id="uploadIndBtn" title="uplink indicator" >&nbsp;</button>
+    <button id="deleteMsg1Btn" title="drag a message here to delete">Del</button> 
+    <button id="deleteMsg2Btn">DelForAll</button>
+    <button id="reloadDialogBtn" title="refresh data">Reload</button>
+    <button id="closeDialogBtn" title="close">X</button>
+  </div>
+  <div id="dialogD">Click on a dialog to open it here</div> 
+  <div id="msgListD"></div>
+  <input type="text" id="replyToInp" name="text" maxlength="4" placeholder="Re:" autocomplete="off" title="drag here a message you want to reply to" />
+  <input type="text" id="textInp" name="text" maxlength="256" placeholder="message" autocomplete="off" /><br />
+  <input type="file" id="fileInp" name="file" />
+  <button id="sendMsgBtn">Send</button> <button id="clearMsgBtn">Clear</button>
+  <p id="alertDiaP"></p>
+</fieldset>
+
+<script>
+  var tgc={};// namespace root
+  //console.log("0");
+</script>
+<script src="utils.js"></script>
+<script src="Controller.js"></script>
+<script src="View.js"></script>
+<script src="Connector.js"></script>
+<script>
+  //console.log("1");
+  tgc.serverParams = { user: "Me", realm: "tgtlc", wsServerUri: "ws://localhost:8080/ws", pathBias: "/", longPollPeriodS: 0, wsOn: true };
+  tgc.userParams = { pb: { pollFactor: "off" } };
+  function $(id) { return document.getElementById(id); }
+  tgc.controller = new tgc.Controller();
+  $("alertBlP").innerHTML = "Starting app...";
+  tgc.controller.setup();
+</script>
+</body>
+</html>

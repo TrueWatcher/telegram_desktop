@@ -1,0 +1,41 @@
+
+tgtlc, a free Telegram desktop client by TrueWatcher 2022-2023
+based on Telethon and asyncio libraries
+console version
+(tested on Ubuntu 20.04)
+
+On the first run you will be prompted to enter your phone number, confirmation code (sent to your other Telegram device), and password (if you have 2FA). After successful login, your credentials will be stored in a file and not asked for agatn. To logout, just delete the session file.
+
+Commands (end with <enter>):
+
+----- main screen (dialog list) ------
+<number> - switch to dialog by that number (first number in the dialog's line)
+reload   - reload all data
+raw      - print raw data as stringified python objects (may be verbose)
+help     - print this help
+exit     - quit the app
+<command>~<args> - execute the command
+
+----- dialog screen (message list) -----
+m             - switch to message screen
+f             - switch to file screen
+df <number>   - download and save file from number'th message (0 for the lowermost)
+                the saving folder defaults to "app_folder/Downloads", but may be set in params.json
+                images have no names on Telegram, thus will be named arbitrarily by timestamp
+del <number> <forAll> - delete number'th message (0 for the lowermost) from this dialog without confirmation
+                        if forAll is given (any string), the message will be also removed for all other users
+                        currently, Telegram allows to completely remove even other users' messages
+reload        - reload this dialog data
+raw           - print raw data as stringified python objects (may be verbose)
+<just enter>  - switch to dialog list
+exit          - quit the app
+
+----- message screen -----
+type your text, ending with <enter>
+<just enter>  - return to dialog screen
+
+----- file screen -----
+type, paste or drag the absolute file path (quotes are tilerated) and press <enter>
+<file path>~<caption><enter> -- upload the file with the caption (separator char is tilda)
+<just enter>  - return to dialog screen
+
