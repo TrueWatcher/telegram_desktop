@@ -35,7 +35,7 @@ type your text, ending with <enter>
 <just enter>  - return to dialog screen
 
 ----- file screen -----
-type, paste or drag the absolute file path (quotes are tilerated) and press <enter>
-<file path>~<caption><enter> -- upload the file with the caption (separator char is tilda)
+type, paste or drag the absolute file path (quotes are tolerated) and press <enter>
+<file path>~<caption text><enter> -- upload the file with the caption (separator char is tilda)
 <just enter>  - return to dialog screen
 
