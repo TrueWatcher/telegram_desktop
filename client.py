@@ -1,32 +1,8 @@
 """
-a free Telegram desktop client (based on the Telethon library) by TrueWatcher 2022 
-1.1.1 20.09.2022 workable file transfers
-1.1.2 21.09.2022 workable message deletion
-1.1.3 22.09.2022 workable unread count
-1.2.0 26.09.2022 refactoring currentDialog
-1.2.1 27.09.2022 refactoring i > dn
-1.2.2 28.09.2022 workable read_ack
-1.2.3 28.09.2022 added dates
-1.3.0 29.09.2022 added addPhoneContact
-1.4.0 03.10.2022 factored Cli to own module
-1.5.0 04.10.2022 workable web ajax handler
-1.5.1 04.10.2022 added html and js code, not run
-1.5.2 05.10.2022 added passing messages from Telethon event to aiohttp handler
-1.5.3 08.10.2022 basic web interface
-1,5,4 10,10,2022 improved file upload
-1.5.5 11.10.2022 workable file download for web
-1.5.6 13.10.2022 workable unread counter for web
-1.5.7 13.10.2022 messageRead handler
-1.5.8 18.10.2022 workable delivery botification
-1.5.9 20.10.2022 fixws and improvements
-1.5.10 21.10.2022 unreadManager.rtf  refactoring
-1.5.11 22.10.2022 extensive refactoring
-1.5.12 22.10.2022 refactoring and improvements
-1.5.14 28.10.2022 added the replyTo feature
-1.5.15 11.11.2022 fixed exception in cli.py::send2
-1.5.16 17.11.2022 added inventory::params::previewLink
-1.5.17 09.04.2023 added hasattr to uibase.py
+a free Telegram desktop client (based on the Telethon library) by TrueWatcher 2022-2023
+https://github.com/TrueWatcher/telegram_desktop
 1.6.0  05.10.2023 cleanup, prepared as git repo
+1.7.0  07.10.2023 added Forward command to consoleui.py and cli.py, refactored client.py
 """
 from telethon import TelegramClient, events
 import asyncio
@@ -40,17 +16,67 @@ from webbridge import WebBridge
 import json
 import uuid
 
-print('tgtlc is a free Telegram desktop client by TrueWatcher 2022')
-inv = Inventory()
-params = inv.loadParams()
-#print(params)    
-client = TelegramClient('anon', params['apiId'], params['apiHash'])
-#print("client created")
-print("connected to Telegram")
-loop = client.loop
+# globals that keep async stuff together
+client = None
+cli = None
+cui = None
+inv = None
+params = None
 
-cui = ConsoleUi()
-cli = Cli(inv, params, client)
+
+def startUp():
+  global client, cui, cli, inv, params
+  print('tgtlc, a free Telegram desktop client by TrueWatcher 2022-2023')
+  inv = Inventory()
+  params = inv.loadParams()
+  #print(params)    
+  client = TelegramClient('anon', params['apiId'], params['apiHash'])
+  print("connected to Telegram")
+  cui = ConsoleUi()
+  cli = Cli(inv, params, client)
+  print("setting up the main loop...")
+  with client:
+    setTGhandlers(cli, cui)
+    client.loop.create_task(loadMessages())
+    client.loop.create_task(webserver())
+    client.loop.run_until_complete(consoleHandler())
+  print("Bye!")
+
+# define keyboard listener
+
+async def consoleHandler():
+  global inv, cli, cui
+  print("console interface started")
+  # https://stackoverflow.com/questions/35223896/listen-to-keypress-with-asyncio
+  # Create a StreamReader with the default buffer limit of 64 KiB.
+  reader = asyncio.StreamReader()
+  pipe = sys.stdin
+  await client.loop.connect_read_pipe(lambda: asyncio.StreamReaderProtocol(reader), pipe)
+
+  async for line in reader:
+    try:
+      command = cui.inputToCommand(line, inv)
+      ret = await cli.run(cui, *command)
+      if ret == -1:  
+        return 0 # quits the app
+    except MyException as err:
+      cui.presentAlert(err)
+
+# attach listeners for incoming messages from the Telegram client    
+
+def setTGhandlers(cli, cui):
+  @client.on(events.NewMessage)
+  async def newMessageHandler(event):
+    command = ['consumeMessage', event]
+    ret = await cli.run(cui, *command)
+      
+  @client.on(events.MessageRead)
+  async def messageReadHandler(event):
+    command = ['consumeMessageRead', event]
+    ret = await cli.run(cui, *command)
+
+
+# define listeners for WebUI requests (AJAX and WS)
 
 async def handlerAjax(request):
   print('')
@@ -99,7 +125,7 @@ async def handlerWebsocket(request):
       print(f"ws sent {act} {msg[act]['id']} to {uid}")
       await wsr.send_json(msg)
     
-  rt = loop.create_task(resend(wsr))  
+  rt = client.loop.create_task(resend(wsr))  
   
   async for msg in wsr:
     if msg.type == WSMsgType.TEXT:
@@ -118,7 +144,8 @@ async def handlerWebsocket(request):
   rt.cancel()
   print(f"websocket connection {uid} closed")
   return wsr
-  
+
+# put all web appliances together  
 
 async def webserver():
   port = 8080
@@ -129,48 +156,23 @@ async def webserver():
     web.post('/a', handlerAjax),
     web.get('/ws', handlerWebsocket),
     web.static( f'/{dlp}', dlp, show_index=False ),
-    web.static( '/', 'http', show_index=True )
+    web.static( '/', 'http', show_index=False )
   ])
   runner = web.AppRunner(app)
   await runner.setup()
   site = web.TCPSite(runner, 'localhost', port)
   await site.start()
-  print(f"Web-interface started on http://127.0.0.1:{port}")
+  print(f"Web-interface started on http://127.0.0.1:{port}")    
+    
+# load messages from the Telegram client (one shot)
 
-
-async def main():
-  print("console interface started")
+async def loadMessages():
+  global inv, cli, cui
   if inv.getMyid() == 0:
     await cli.loadData(cui)
     cui.adoptMode('buddies', inv)
-  
-  # https://stackoverflow.com/questions/35223896/listen-to-keypress-with-asyncio
-  # Create a StreamReader with the default buffer limit of 64 KiB.
-  reader = asyncio.StreamReader()
-  pipe = sys.stdin
-  await client.loop.connect_read_pipe(lambda: asyncio.StreamReaderProtocol(reader), pipe)
+  return 0
 
-  async for line in reader:
-    try:
-      command = cui.inputToCommand(line, inv)
-      ret = await cli.run(cui, *command)
-      if ret == -1:  
-        return 0 # quits the app
-    except MyException as err:
-      cui.presentAlert(err)
-    
-@client.on(events.NewMessage)
-async def newMessageHandler(event):
-  command = ['consumeMessage', event]
-  ret = await cli.run(cui, *command)
-    
-@client.on(events.MessageRead)
-async def messageReadHandler(event):
-  command = ['consumeMessageRead', event]
-  ret = await cli.run(cui, *command)
+#------------------------------------------------------
 
-       
-with client:
-  client.loop.create_task(webserver())
-  client.loop.run_until_complete(main())
-  print("Bye!")
+startUp()

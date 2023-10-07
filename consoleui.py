@@ -5,7 +5,7 @@ from myexception import MyException
 class ConsoleUi(UiBase):
   SEP = '~'
   MODES = ['buddies','dialog','text','file']
-  PROMPTS = [ 'number | reload | help | exit', 'm | f | df | del | reload | return', 'message', 'file' ]
+  PROMPTS = [ 'number | reload | help | exit', 'm | f | df | del | fw | reload | return', 'message', 'file' ]
   D_HEADER = 'number === name / username / phone === total / unread'
   def __init__(self):
     self.mode = ''
@@ -25,8 +25,10 @@ class ConsoleUi(UiBase):
     if self.mode == 'buddies':
       if line2 == 'raw':
         return ['printRaw']
+      
       elif line2 == 'reload':
         return ['reloadAll']
+      
       i = None
       try: 
         i = int(line2)
@@ -35,20 +37,25 @@ class ConsoleUi(UiBase):
       return ['selectDialog','i',i]
     
     elif self.mode == 'dialog':
-      if line2 == '':
+      if line2 == '' or line2 == 'return':
         return ['listDialogs', dn]
+      
       elif line2 == 'm' or line2 == 'ь':
         return ['switchToText']
+      
       elif line2 == 'f':
         return ['switchToFile']
+      
       elif line2 == 'raw':
         return ['printRaw']
+      
       elif line2.startswith('df'):
         parts = line2.split(' ')
         if parts[0] != 'df':
           return dc
         offset = '' if len(parts) <= 1 else parts[1]
         return ['downloadFile', dn, 'o', offset]
+      
       elif line2.startswith('del'):
         parts = line2.split(' ')
         if parts[0] != 'del':
@@ -56,8 +63,20 @@ class ConsoleUi(UiBase):
         offset = '' if len(parts) <= 1 else parts[1]
         forAll = True if len(parts) > 2 and parts[2] else False
         return ['deleteMessage', dn, 'o', offset, forAll]
+      
+      elif line2.startswith('fw'):
+        parts = line2.split(' ')
+        if parts[0] != 'fw':
+          return dc
+        if len(parts) < 3:
+          return dc
+        offset = parts[1]
+        targetDialogIndex = parts[2]
+        return ['forwardMessage', dn, 'o', offset, 'i', targetDialogIndex]
+      
       elif line2 == 'reload':
         return ['reloadDialog', dn]
+      
       else: 
         return dc
     

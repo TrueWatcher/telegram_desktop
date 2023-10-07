@@ -1,11 +1,11 @@
-tgtlc is a free desktop Telegram client,
-written in Python and based on Telethon and asincio libraries.
+tgtlc, a free desktop Telegram client,
+written in Python and based on Telethon and asyncio libraries.
 
 It provides two user interfaces:
-- console interface, with basic message handling from a terminal window and keyboard, intented for rapid sharing of files and links over Telegram
+- console interface, with basic message handling from a terminal window and keyboard, intended for rapid sharing of files and links over Telegram ([screnshot 1](screenshots/tgtlc_1-7-0_dialog_screen.png))
 - web interface, exposed at http://localhost:8080/index.html is more colourful and supports also features like read receipts and reply-to
 
-The app has been tested with Python 3.8 and 3.9 on Ubuntu 20.04 and Linux Mint DE. Web UI tested on Chromium and Firefox, recent as of 2023. Not tested (yet) on Windows or MacOS.
+The app has been tested with Python 3.8 and 3.9 on Ubuntu 20.04 and Linux Mint DE. Web UI tested with Chromium and Firefox, recent as of 2023. Not tested (yet) on Windows or MacOS.
 
 Installation:
 - make sure you have Python >= 3.8 installed
@@ -25,7 +25,7 @@ Installation:
         python -m pip install -r freeze.txt
         deactivate
 
-- get API ID and API hash from Telegram, as I cannot share mine here :( ,
+- obtain your API ID and hash from Telegram, because I cannot share mine here :( ,
   enter them into _example_params_json.txt_, rename it to _params.json_
   
 - create the _Downloads_ folder
@@ -47,6 +47,6 @@ The web UI is exposed at http://localhost:8080/index.html and also uses WebSocke
 It works, but is all experimental and has no help page yet.
 
 ---------------
-This app is a free software under GPL 3.0 license.
-[Telethon library](https://docs.telethon.dev/en/stable/) is under MIT license.
+This app is a free software under the GPL 3.0 license.
+[Telethon library](https://docs.telethon.dev/en/stable/) is under the MIT license.
 

@@ -19,6 +19,7 @@ class Cli:
     me = await self.client.get_me()
     self.inv.setMe(me)
     print(f"You are {ui.presentNames( self.inv.getMe() )}")
+    print(f"Downloading your messages, please, wait...")
     await self.client.catch_up()
     async for dialog in self.client.iter_dialogs():
       dn = dialog.name
@@ -57,7 +58,7 @@ class Cli:
         changed[dn] = maxId
     return changed
 
-  async def run(self, ui, act, arg0=None, arg1=None, arg2=None, arg3=None):
+  async def run(self, ui, act, arg0=None, arg1=None, arg2=None, arg3=None, arg4=None):
     if act == '':
       return 0
     
@@ -116,30 +117,16 @@ class Cli:
       return 0
     
     elif act == 'selectDialog': # type, i|dn
-      if arg0 == 'i':
-        try:
-          arg1 = int(arg1)
-        except:
-          raise MyException(f"Non-integer arg1:{arg1}")
-        if arg1 < 0 or arg1 >= self.inv.getDialogCount():
-          raise MyException(f"Wrong dialog number:{arg1}")
-        arg1 = self.inv.i2dn(arg1)
-        arg0 = 'n'
-        # fall through
-      if arg0 == 'n':  
-        dn = arg1
-        if dn not in self.inv.dialogs:
-          raise MyException(f"Wrong dialog name:{dn}!")
-        replaced = ui.getCurrentDialog()
-        if replaced and dn != replaced:
-          self.inv.um.onLeaveDialog(replaced)
-          ui.setReplacedDialog(replaced)
-        ui.setCurrentDialog(dn, self.inv)
-        ui.adoptMode('dialog', self.inv)
-        ret = await self.sendRead(dn)
-        if ret:  self.inv.um.onLeaveDialog(dn) # update and save access time
-        return 0
-      raise MyException(f"Wrong select code:{arg0}")
+      dn = self.getDn(arg0, arg1)
+      replaced = ui.getCurrentDialog()
+      if replaced and dn != replaced:
+        self.inv.um.onLeaveDialog(replaced)
+        ui.setReplacedDialog(replaced)
+      ui.setCurrentDialog(dn, self.inv)
+      ui.adoptMode('dialog', self.inv)
+      ret = await self.sendRead(dn)
+      if ret:  self.inv.um.onLeaveDialog(dn) # update and save access time
+      return 0
     
     elif act == 'listDialogs': # dn
       self.inv.um.onLeaveDialog( arg0 )
@@ -169,6 +156,25 @@ class Cli:
         raise MyException(f"Failed to send:{type(retMsg)}!")
       self.inv.addMessage(dn, self.inv.forceMine(retMsg)) #  dn, msg
       ui.adoptMode('dialog', self.inv)
+      return 0
+    
+    elif act == 'forwardMessage': # dn, msgArgType, id|offset, dialogArgType, index|name
+      dn = arg0
+      if not dn in self.inv.dialogs:
+        raise MyException(f"No dialog given")
+      if arg1 == '' or arg3 == '':
+        return 0
+      msg = self.getMessage(arg1, arg2, dn)
+      toName = self.getDn(arg3, arg4)
+      to = self.inv.getEntity(toName)
+      #print(f"About to forward _{msg.raw_text}_ to {toName}")
+      #raise MyException(f"break")
+      retMsg = await msg.forward_to(to)
+      if not str(type(retMsg)).__contains__('.Message'):
+        raise MyException(f"Failed to forward:{type(retMsg)}!")
+      self.inv.addMessage(toName, retMsg) #  dn, msg
+      ui.presentAlert(f"forwarded {msg.id} to {toName}")
+      #ui.redraw(self.inv)
       return 0
     
     elif act == 'send2': # name|phone, text_no_spaces
@@ -237,21 +243,12 @@ class Cli:
     
     elif act == 'deleteMessage': # dn, type, id|offset, forAll
       dn = arg0
+      if not dn in self.inv.dialogs:
+        raise MyException(f"No dialog given")
       if arg2 == '':
         return 0
       forAll = True if arg3 else False
-      if not dn in self.inv.dialogs:
-        raise MyException(f"No dialog selected")
-      if arg1 == 'o':
-        j = self.inv.makeOffset(dn, arg2) # dn, aOffset
-        #print(dn)
-        #raise MyException(f"break")
-        msg = self.inv.messages[dn][j]
-      elif arg1 == 'id':
-        msg = self.inv.findMessageById(dn, int(arg2)) # dn, msgId
-      else:
-        raise MyException(f"Invalid type:{arg1}")
-      if not msg:  raise MyException(f"No such message:{dn} {arg1} {arg2}")
+      msg = self.getMessage(arg1, arg2, dn)
       #print(msg.raw_text)
       #raise MyException(f"break")
       msgId = msg.id
@@ -376,4 +373,36 @@ class Cli:
     if not last: return False
     to = self.inv.getEntity(dn) if entity is None else entity
     return await self.client.send_read_acknowledge( to, last )
+  
+  def getDn(self, argType, indexOrName):
+    if argType == 'i':
+      try:
+        indexOrName = int(indexOrName)
+      except:
+        raise MyException(f"Non-integer indexOrName:{indexOrName}")
+      if indexOrName < 0 or indexOrName >= self.inv.getDialogCount():
+        raise MyException(f"Wrong dialog number:{indexOrName}")
+      indexOrName = self.inv.i2dn(indexOrName)
+      argType = 'n'
+      # fall through
+    if argType == 'n':  
+      dn = indexOrName
+      if dn not in self.inv.dialogs:
+        raise MyException(f"Wrong dialog name:{dn}!")
+      return dn
+    raise MyException(f"Wrong select code:{arg0}")
+  
+  def getMessage(self, argType, idOrOoffset, dn):
+    msg = False
+    if argType == 'o':
+      j = self.inv.makeOffset(dn, idOrOoffset) # dn, aOffset
+      #print(dn)
+      #raise MyException(f"break")
+      msg = self.inv.messages[dn][j]
+    elif argType == 'id':
+      msg = self.inv.findMessageById(dn, int(idOrOoffset)) # dn, msgId
+    else:
+      raise MyException(f"Invalid type:{argType}")
+    if not msg:  raise MyException(f"No such message:{dn} {argType} {idOrOoffset}")
+    return msg
 
