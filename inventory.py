@@ -9,6 +9,10 @@ from unreadmanager import UnreadManager
 from typing import List, Dict, Union
 from telethon.tl.custom.message import Message
 from telethon.tl.custom.dialog import Dialog
+import asyncio
+
+DataType = Union[bool,int,str]
+StrStr = Dict[str,str]
 
 class Inventory:
   
@@ -28,12 +32,12 @@ class Inventory:
     if sys.version_info < (3,6,0):
       raise MyException(f"Python before 3.6 cannot run this")
     # oredered dictionaries
-    self.dialogs = {}
-    self.messages = {}
+    self.dialogs: Dict[str, Dialog] = {}
+    self.messages: Dict[str, Message] = {}
     self.me = self.Nme( 0, "Neo", "000000" )
     self.um = UnreadManager(self)
-    self.ipc = {}
-    self.params = {}
+    self.ipc: Dict[str, asyncio.Queue] = {}
+    self.params: Dict[str,DataType] = {}
     self.mm = self.MediaManager(self)
   
   def clearData(self) -> None:
@@ -202,7 +206,7 @@ class Inventory:
     
     def __init__(self, inv: 'Inventory') -> None:
       self.inv = inv
-      self.mediaLinks = {}
+      self.mediaLinks: Dict[str, StrStr] = {}
   
     def removeTmpUpload(self, fullFileName: str) -> None:
       parts = fullFileName.split('/')

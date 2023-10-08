@@ -10,18 +10,21 @@ The app has been tested with Python 3.8 and 3.9 on Ubuntu 20.04 and Linux Mint D
 Installation:
 - make sure you have Python >= 3.8 installed
 
-        sudo apt install python3.8 python3.8-venv
+        sudo apt install software-properties-common
+        sudo add-apt-repository ppa:deadsnakes/ppa
+        sudo apt update
+        sudo apt install python3.9 python3.9-venv
   
 - download the app folder with files
 
 - create a virtual environment and install dependencies
 
         cd telegram_desktop
-        python3.8 -m venv venv
+        python3.9 -m venv venv
         source venv/bin/activate
-        python --version      # 3.8.*
+        python --version      # 3.9.*
         python -m pip install --upgrade pip
-        python -m pip --version       # >= 22.3
+        python -m pip --version       # >= 23.2
         python -m pip install -r freeze.txt
         deactivate
 
@@ -31,13 +34,14 @@ Installation:
 - create the _Downloads_ folder
 
         mkdir Downloads
+        mkdir uploadTmp
         
   if you later decide to remove its content, remove also _medialinks.json_
   
 - now run it !
 
         cd telegram_desktop
-        venv/bin/python3.8 client.py
+        venv/bin/python3.9 client.py
         
   in the terminal window you will be prompted to enter your phone number, confirmation code (sent to your other Telegram device), and password (if you have 2FA). After successful login, your credentials will be stored in a file and not asked for agatn. To logout, just delete the session file.
   

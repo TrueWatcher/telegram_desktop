@@ -21,7 +21,7 @@ class Cli:
     self.params = params
     self.client = client
 
-  async def loadData(self, ui: ConsoleUi) -> int:
+  async def loadData(self, ui: Union[ConsoleUi,WebBridge]) -> int:
     me = await self.client.get_me()
     self.inv.setMe(me)
     print(f"You are {ui.presentNames( self.inv.getMe() )}")
@@ -29,7 +29,8 @@ class Cli:
     await self.client.catch_up()
     async for dialog in self.client.iter_dialogs():
       dn = dialog.name
-      assert not not dn # if "Deleted account" triggers this, just comment out this line
+      if not dn:  # "Deleted account"
+        continue
       self.inv.addDialog(dialog)
       fromClient = await self.client.get_messages(dialog.entity, self.params['maxMessages'])
       self.inv.addMessageList( dn, fromClient )
@@ -159,7 +160,7 @@ class Cli:
         raise MyException(f"No dialog selected")
       if (not arg1 and not arg2) or (arg1 == '' and arg2 == ''):
         return 0
-      iarg3 = int(arg3) if arg3 else None
+      iarg3 = int(arg3) if arg3 else 0
       if arg3 and not iarg3:
         raise MyException(f"Non-number replyTo:{arg3}")
       retMsg = await self.doSend(act, dn, arg1, arg2, iarg3) # on success returns message
@@ -238,7 +239,7 @@ class Cli:
         raise MyException(f"Invalid type:{arg1}")  
       if arg3:
         self.inv.mm.deleteMediaLink(dn, msg.id, True);
-        resPath = False
+        resPath = ""
       else:
         if msg.file and msg.file.name:
           fn = msg.file.name
@@ -366,7 +367,7 @@ class Cli:
     
     raise MyException(f"Not to get here")
 
-  async def doSend(self, act: str, dn: str, text: str, fileName: str, replyToId: int = 0) -> Message:
+  async def doSend(self, act: str, dn: str, text: str, fileName: str, replyToId: Union[int,None] = None) -> Message:
     if not replyToId:  replyToId = None
     to = self.inv.getEntity( dn )
     if act == 'sendMessage':
@@ -385,7 +386,7 @@ class Cli:
     to = self.inv.getEntity(dn) if entity is None else entity
     return await self.client.send_read_acknowledge( to, last )
   
-  def getDn(self, argType: str, indexOrName: str) -> str:
+  def getDn(self, argType: str, indexOrName: Union[int,str]) -> str:
     if argType == 'i':
       try:
         indexOrName = int(indexOrName)
@@ -397,14 +398,14 @@ class Cli:
       argType = 'n'
       # fall through
     if argType == 'n':  
-      dn = indexOrName
+      dn = str(indexOrName)
       if dn not in self.inv.dialogs:
         raise MyException(f"Wrong dialog name:{dn}!")
       return dn
     raise MyException(f"Wrong argType:{argType}")
   
   def getMessage(self, argType: str, idOrOoffset: str, dn: str) -> Message:
-    msg = False
+    msg = None
     if argType == 'o':
       j = self.inv.makeOffset(dn, idOrOoffset) # dn, aOffset
       #print(dn)

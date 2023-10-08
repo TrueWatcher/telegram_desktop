@@ -6,3 +6,5 @@
 *.session
 /.pytype/
 pytype.*
+/.mypy_cache/
+mypy.txt

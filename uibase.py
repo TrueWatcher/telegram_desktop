@@ -22,21 +22,21 @@ class UiBase():
     ph = '' if not hasattr(user,'phone') or not user.phone else user.phone
     return f"{fn} / {un} / {ph}"   
   
-  def repackMessage(self, msg: Message, myid: int, isUnread: bool = False, mediaLink: str = '', isDelivered: bool = True) -> Union[DataDict,None]:
+  def repackMessage(self, msg: Message, myid: int, isUnread: bool = False, mediaLink: Union[str,None] = None, isDelivered: bool = True) -> Union[DataDict,None]:
     if msg is None: return None
-    r = {}
-    r['isMine'] = hasattr(msg,'from_id') and hasattr(msg.from_id, 'user_id') and msg.from_id.user_id == myid
-    r['prefix'] = '>' if r['isMine'] else '<'
-    r['unread'] = False if r['isMine'] else isUnread
+    r: DataDict = {}
+    r['isMine']  = hasattr(msg,'from_id') and hasattr(msg.from_id, 'user_id') and msg.from_id.user_id == myid
+    r['prefix']  = '>' if r['isMine'] else '<'
+    r['unread']  = False if r['isMine'] else isUnread
     r['fwdFrom'] = '' if not (hasattr(msg,'fwd_from') and msg.fwd_from and msg.fwd_from.from_name) else msg.fwd_from.from_name
-    r['id'] = msg.id
+    r['id']      = msg.id
     media = ''
     if msg.file:
       fn = 'unknown' if not hasattr(msg.file,"name") or not msg.file.name else msg.file.name
       media = f"-file: {fn}- "
     elif hasattr(msg,'media') and msg.media:
       media = f"-media: {type(msg.media)}- "
-    r['media'] = media
+    r['media']     = media
     r['mediaLink'] = '' if not mediaLink else mediaLink
     text = ''
     if hasattr(msg,'message') and isinstance(msg.message, str) and msg.message == '': 
@@ -78,7 +78,7 @@ class UiBase():
         return self.dateFormat1
       
   def repackDialog(self, dialog: Dialog, index: int, inv: Inventory) -> DataDict:
-    r = {}
+    r: DataDict = {}
     r['i'] = index
     e = dialog.entity
     dn = dialog.name

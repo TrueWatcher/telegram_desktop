@@ -1,7 +1,7 @@
 import os
 from uibase import UiBase
 from myexception import MyException
-from typing import List, Dict, Union
+from typing import List, Dict, Sequence, Union
 from telethon.tl.custom.message import Message
 from telethon.tl.custom.dialog import Dialog
 from inventory import Inventory
@@ -13,12 +13,12 @@ class ConsoleUi(UiBase):
   PROMPTS = [ 'number | reload | help | exit', 'm | f | df | del | fw | reload | return', 'message', 'file' ]
   D_HEADER = 'number === name / username / phone === total / unread'
   def __init__(self) -> None:
-    self.mode = ''
-    self.currentDialog = None
+    self.mode: str = ''
+    self.currentDialog: Union[str,None] = None
     super().__init__()
     print(f"Your timezone:{self.localTimeZone}") 
 
-  def inputToCommand(self, line: bytearray, inv: Inventory) -> List[Union[str,int]]:
+  def inputToCommand(self, line: bytearray, inv: Inventory) -> Sequence[Union[str,int]]:
     assert self.mode in self.MODES, f"unknown mode {self.mode}" 
     dn = self.getCurrentDialog()
     line2 = line.decode().rstrip('\n')
@@ -137,7 +137,7 @@ class ConsoleUi(UiBase):
   def clearCurrentDialog(self) -> None:
     self.currentDialog = None
     
-  def setCurrentDialog(self, dn: str, inv: Inventory) -> None:
+  def setCurrentDialog(self, dn: Union[str,int], inv: Inventory) -> None:
     if isinstance(dn, int):
       dn = inv.i2dn(dn)
     assert dn in inv.dialogs
@@ -157,9 +157,10 @@ class ConsoleUi(UiBase):
   def presentMessage(self, msg: Message, myid: int, isUnread: bool = False) -> None:
     r = self.repackMessage(msg, myid, isUnread = False)
     if r is None: return
-    prefix = f"\033[1;96m{r['prefix']}\033[0m" if isUnread else r['prefix']
-    if r['fwdFrom']:  prefix = prefix + r['fwdFrom'] + prefix 
-    re = '' if not r['replyToId'] else f"Re:{r['replyToId']} "
+    prefix: str = f"\033[1;96m{r['prefix']}\033[0m" if isUnread else str(r['prefix'])
+    if isinstance(r['fwdFrom'],str) and r['fwdFrom']:
+      prefix = prefix + r['fwdFrom'] + prefix 
+    re: str = '' if not r['replyToId'] else f"Re:{r['replyToId']} "
     print(f"{prefix} {re}{r['media']}{r['action']}{r['text']} [{r['date']}]")
       
   def presentDialog(self, dialog: Dialog, index: int, inv: Inventory) -> None:
@@ -191,7 +192,7 @@ class ConsoleUi(UiBase):
       #print(inv.dialogs)
       print(self.D_HEADER)
       print()
-      for i, (dn, dialog) in enumerate(inv.dialogs.items()):
+      for i, (dnn, dialog) in enumerate(inv.dialogs.items()):
         self.presentDialog(dialog, i, inv)
       self.printPrompt()
       
@@ -199,6 +200,7 @@ class ConsoleUi(UiBase):
       print()
       print()
       dn = self.currentDialog
+      assert isinstance(dn, str)
       self.presentDialog(inv.dialogs[dn], -1, inv)
       for j,m in enumerate(inv.messages[dn]):
         l = len(inv.messages[dn])
@@ -223,13 +225,14 @@ class ConsoleUi(UiBase):
     self.redraw(inv)
     
   def getRawData(self, inv: Inventory) -> str:
-    r = ''
+    r: str = ''
     if self.mode == 'buddies':
-      for i,(dn,dialog) in enumerate(inv.dialogs.items()):
+      for i,(dnn,dialog) in enumerate(inv.dialogs.items()):
         r += f"{i} => {dialog.stringify()}"
         
     elif self.mode == 'dialog' or self.currentDialog:
       dn = self.currentDialog
+      assert isinstance(dn, str) and dn in inv.messages
       for j,m in enumerate(inv.messages[dn]):
         l = len(inv.messages[dn])
         mm = inv.messages[dn][l-j-1]

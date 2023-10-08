@@ -4,11 +4,13 @@ https://github.com/TrueWatcher/telegram_desktop
 1.6.0  05.10.2023 cleanup, prepared as git repo
 1.7.0  07.10.2023 added Forward command to consoleui.py and cli.py, refactored client.py
 1.7.1  08.10.2023 added type annotations to several files
+1.7.2  09.10.2023 updated venv to 3.9, code improvements
 """
 from telethon import TelegramClient, events
 import asyncio
 import sys
 from aiohttp import web, WSMsgType
+from aiohttp_index import IndexMiddleware
 from myexception import MyException
 from consoleui import ConsoleUi
 from inventory import Inventory
@@ -150,7 +152,7 @@ async def handlerWebsocket(request):
 
 async def webserver():
   port = 8080
-  app = web.Application()
+  app = web.Application(middlewares=[IndexMiddleware()])
   dlp = params['downloadPath']
   app.add_routes([
     web.get('/a', handlerAjax),
