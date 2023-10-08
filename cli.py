@@ -7,15 +7,21 @@ from telethon.tl.types import InputPhoneContact
 from telethon.tl.functions.contacts import ImportContactsRequest
 from telethon.tl.functions.messages import GetPeerDialogsRequest
 from myexception import MyException
+from typing import Dict, Union
+from telethon.tl.custom.message import Message
+from inventory import Inventory
+from uibase import UiBase
+from consoleui import ConsoleUi
+from webbridge import WebBridge
 
 class Cli:
   
-  def __init__(self, inv, params, client):
+  def __init__(self, inv: Inventory, params: Dict, client: TelegramClient) -> None:
     self.inv = inv
     self.params = params
     self.client = client
 
-  async def loadData(self, ui):
+  async def loadData(self, ui: ConsoleUi) -> int:
     me = await self.client.get_me()
     self.inv.setMe(me)
     print(f"You are {ui.presentNames( self.inv.getMe() )}")
@@ -34,7 +40,7 @@ class Cli:
     print(f"found {n} downloaded files in {self.params['downloadPath']}")
     return 0
   
-  async def reloadDialog(self, dn):
+  async def reloadDialog(self, dn: str) -> int:
     assert dn in self.inv.dialogs
     fromClient = await self.client.get_messages(self.inv.getEntity(dn), self.params['maxMessages'])
     self.inv.replaceMessages( dn, fromClient )
@@ -42,7 +48,7 @@ class Cli:
     self.inv.um.countOneDialog(dn)
     return 0
   
-  async def checkUndelivered(self):
+  async def checkUndelivered(self) -> Dict:
   # https://stackoverflow.com/questions/66993647/how-to-detect-if-my-messages-on-telegram-is-already-read-using-telethon
     changed = {}
     ul = self.inv.um.getDialogsWithUndelivered()
@@ -58,7 +64,7 @@ class Cli:
         changed[dn] = maxId
     return changed
 
-  async def run(self, ui, act, arg0=None, arg1=None, arg2=None, arg3=None, arg4=None):
+  async def run(self, ui: Union[ConsoleUi,WebBridge], act: str, arg0=None, arg1=None, arg2=None, arg3=None, arg4=None) -> int:
     if act == '':
       return 0
     
@@ -74,8 +80,12 @@ class Cli:
     elif act == 'consumeMessage': # msgEvent
       #print("new message")
       event = arg0
+      if event.message is None:
+        ui.presentAlert(f"Got event without message:{event}")
+        return 0
       peer = event.message.peer_id.user_id
       found = self.inv.findDialogByPeerId(peer)
+      name = ''
       if found is None:
         sender = await event.get_sender()
         name = ui.presentNames(sender)
@@ -94,6 +104,7 @@ class Cli:
       
       if self.inv.ipc:
         newMsg = ui.repackMessage(event.message, self.inv.getMyid(), True)
+        if newMsg is None:  return 0
         newMsg["from"] = found if found is not None else name
         kk = self.inv.enqueueIpc( {'newMessage': newMsg} )
         for key in kk:  print(f"queued newMessage {newMsg['id']} to {key}")
@@ -355,7 +366,7 @@ class Cli:
     
     raise MyException(f"Not to get here")
 
-  async def doSend(self, act, dn, text, fileName, replyToId = None):
+  async def doSend(self, act: str, dn: str, text: str, fileName: str, replyToId: int = 0) -> Message:
     if not replyToId:  replyToId = None
     to = self.inv.getEntity( dn )
     if act == 'sendMessage':
@@ -368,13 +379,13 @@ class Cli:
       return retMsg
     raise MyException(f"doSend unknown command:{act}!")
     
-  async def sendRead(self, dn, entity=None, msg=None):
+  async def sendRead(self, dn: str, entity=None, msg: Message=None):
     last = self.inv.um.getLastUnread(dn) if msg is None else msg
     if not last: return False
     to = self.inv.getEntity(dn) if entity is None else entity
     return await self.client.send_read_acknowledge( to, last )
   
-  def getDn(self, argType, indexOrName):
+  def getDn(self, argType: str, indexOrName: str) -> str:
     if argType == 'i':
       try:
         indexOrName = int(indexOrName)
@@ -390,9 +401,9 @@ class Cli:
       if dn not in self.inv.dialogs:
         raise MyException(f"Wrong dialog name:{dn}!")
       return dn
-    raise MyException(f"Wrong select code:{arg0}")
+    raise MyException(f"Wrong argType:{argType}")
   
-  def getMessage(self, argType, idOrOoffset, dn):
+  def getMessage(self, argType: str, idOrOoffset: str, dn: str) -> Message:
     msg = False
     if argType == 'o':
       j = self.inv.makeOffset(dn, idOrOoffset) # dn, aOffset

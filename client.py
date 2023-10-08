@@ -3,6 +3,7 @@ a free Telegram desktop client (based on the Telethon library) by TrueWatcher 20
 https://github.com/TrueWatcher/telegram_desktop
 1.6.0  05.10.2023 cleanup, prepared as git repo
 1.7.0  07.10.2023 added Forward command to consoleui.py and cli.py, refactored client.py
+1.7.1  08.10.2023 added type annotations to several files
 """
 from telethon import TelegramClient, events
 import asyncio
@@ -16,7 +17,7 @@ from webbridge import WebBridge
 import json
 import uuid
 
-# globals that keep async stuff together
+# globals that keep async stuff connected
 client = None
 cli = None
 cui = None

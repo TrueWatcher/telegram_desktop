@@ -1,7 +1,14 @@
 import datetime
+from typing import List, Dict, Union
+from telethon.tl.custom.message import Message
+from telethon.tl.custom.dialog import Dialog
+from inventory import Inventory
+
+DataType = Union[bool,int,str]
+DataDict = Dict[str, DataType]
 
 class UiBase():
-  def __init__(self):
+  def __init__(self) -> None:
     self.localTimeZone = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
     # https://stackoverflow.com/questions/1111056/get-time-zone-information-of-the-system-in-python
     self.year = datetime.datetime.now(self.localTimeZone).year
@@ -9,13 +16,13 @@ class UiBase():
     self.dateFormat1 = '%b %-d %-H:%M'
     self.dateFormat0 = '%Y %b %-d %-H:%M'
     
-  def presentNames(self, user):
+  def presentNames(self, user) -> str:
     fn = '' if not hasattr(user,'first_name') or not user.first_name else user.first_name
     un = '' if not hasattr(user,'username') or not user.username else user.username
     ph = '' if not hasattr(user,'phone') or not user.phone else user.phone
     return f"{fn} / {un} / {ph}"   
   
-  def repackMessage(self, msg, myid, isUnread = False, mediaLink = '', isDelivered = True):
+  def repackMessage(self, msg: Message, myid: int, isUnread: bool = False, mediaLink: str = '', isDelivered: bool = True) -> Union[DataDict,None]:
     if msg is None: return None
     r = {}
     r['isMine'] = hasattr(msg,'from_id') and hasattr(msg.from_id, 'user_id') and msg.from_id.user_id == myid
@@ -51,16 +58,16 @@ class UiBase():
     r['replyToId'] = '' if not hasattr(msg,"reply_to") or not msg.reply_to or not hasattr(msg.reply_to,"reply_to_msg_id") or not msg.reply_to.reply_to_msg_id else msg.reply_to.reply_to_msg_id
     return r
   
-  def repackMessage2(self, msg, dn, inv):
+  def repackMessage2(self, msg: Message, dn: str, inv: Inventory) -> Union[DataDict,None]:
     r = self.repackMessage( msg, inv.getMyid(), inv.um.isUnread(dn, msg), inv.mm.getMediaLink(dn, msg.id), inv.um.isDelivered(dn, msg) )
     return r
   
-  def localize(self, date):
+  def localize(self, date) -> str:
     assert date is not None
     dateToLocal = date.astimezone(self.localTimeZone)
     return dateToLocal.strftime(self.getDateFormat(dateToLocal))
   
-  def getDateFormat(self, dateToLocal):
+  def getDateFormat(self, dateToLocal) -> str:
     if dateToLocal.year != self.year:
       return self.dateFormat0
     else:
@@ -70,9 +77,9 @@ class UiBase():
       else:
         return self.dateFormat1
       
-  def repackDialog(self, dialog, i, inv):
+  def repackDialog(self, dialog: Dialog, index: int, inv: Inventory) -> DataDict:
     r = {}
-    r['i'] = i
+    r['i'] = index
     e = dialog.entity
     dn = dialog.name
     r['name'] = dn
