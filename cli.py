@@ -7,7 +7,7 @@ from telethon.tl.types import InputPhoneContact
 from telethon.tl.functions.contacts import ImportContactsRequest
 from telethon.tl.functions.messages import GetPeerDialogsRequest
 from myexception import MyException
-from typing import Dict, Union
+from typing import Dict, Union, List
 from telethon.tl.custom.message import Message
 from inventory import Inventory
 from uibase import UiBase
@@ -33,6 +33,7 @@ class Cli:
         continue
       self.inv.addDialog(dialog)
       fromClient = await self.client.get_messages(dialog.entity, self.params['maxMessages'])
+      await self.addAllAuthorNames(fromClient)
       self.inv.addMessageList( dn, fromClient )
     self.inv.um.countUnreadMessages()
     newDelivered = await self.checkUndelivered()
@@ -44,6 +45,7 @@ class Cli:
   async def reloadDialog(self, dn: str) -> int:
     assert dn in self.inv.dialogs
     fromClient = await self.client.get_messages(self.inv.getEntity(dn), self.params['maxMessages'])
+    await self.addAllAuthorNames(fromClient)
     self.inv.replaceMessages( dn, fromClient )
     self.inv.um.updateAccessTime(dn)
     self.inv.um.countOneDialog(dn)
@@ -82,10 +84,19 @@ class Cli:
       #print("new message")
       event = arg0
       if event.message is None:
-        ui.presentAlert(f"Got event without message:{event}")
-        return 0
-      peer = event.message.peer_id.user_id
-      found = self.inv.findDialogByPeerId(peer)
+        raise MyException(f"Got event without message:{event}")
+      msg: Message = event.message
+      peerId = 0
+      if not hasattr(msg,"peer_id"): 
+        raise MyException(f"Got message without peer_id:{msg}")
+      if hasattr(msg.peer_id,'user_id'):
+        peerId = msg.peer_id.user_id
+      elif hasattr(msg.peer_id,'chat_id'):
+        peerId = msg.peer_id.chat_id
+      else: raise MyException(f"Got message with weird peer_id:{msg}")
+      
+      await self.addAuthorName(msg)
+      found = self.inv.findDialogByPeerId(peerId)
       name = ''
       if found is None:
         sender = await event.get_sender()
@@ -93,10 +104,10 @@ class Cli:
         ui.presentNewMessage(event, name, self.inv.getMyid())
         # await sendRead(sender.username, sender, event)
       else:
-        if self.inv.isDuplicateId(found, event.message):
+        if self.inv.isDuplicateId(found, msg):
         # sometimes after sending a new message the server sends it again as new
           return 0
-        self.inv.addMessage(found, event.message)
+        self.inv.addMessage(found, msg)
         ui.redraw(self.inv)
         openDialog = ui.getCurrentDialog() # for web it is None
         if found == openDialog:
@@ -104,7 +115,7 @@ class Cli:
           if ret: self.inv.um.onLeaveDialog(openDialog) # update and save access time
       
       if self.inv.ipc:
-        newMsg = ui.repackMessage(event.message, self.inv.getMyid(), True)
+        newMsg = ui.repackMessage(msg, self.inv.getMyid(), True)
         if newMsg is None:  return 0
         newMsg["from"] = found if found is not None else name
         kk = self.inv.enqueueIpc( {'newMessage': newMsg} )
@@ -287,16 +298,17 @@ class Cli:
       ui.redraw(self.inv)
       return 0
     
-    elif act == 'lookup': # name|phone|id
+    elif act == 'lookup': # name|phone|id isIntId
       if not arg0:
         raise MyException(f"Provide name, phone or id")
       res = None
+      arg: Union[int,str] = int(arg0) if arg1 else arg0 # id is int, others are str
       try:
-        res = await self.client.get_entity(arg0)
-      except:
-        ui.presentAlert(f"Failure for {arg0}")
+        res = await self.client.get_entity(arg)
+      except Exception as err:
+        ui.presentAlert(f"Failure for {arg}: {err}")
       if not res:
-        ui.presentAlert(f"No entity found for {arg0}")
+        ui.presentAlert(f"No entity found for {arg}")
       else:
         ui.presentData(res.stringify(), self.inv)
       #ui.redraw(self.inv)
@@ -418,3 +430,62 @@ class Cli:
     if not msg:  raise MyException(f"No such message:{dn} {argType} {idOrOoffset}")
     return msg
 
+  async def addAuthorName(self, msg: Message) -> None:
+    def getIdFromForwarded(msg: Message) -> str:
+      if hasattr(msg.fwd_from,'from_id') and hasattr(msg.fwd_from.from_id,'user_id'):
+        return msg.fwd_from.from_id.user_id
+      elif hasattr(msg.fwd_from,'from_id') and hasattr(msg.fwd_from.from_id,'channel_id'):
+        return msg.fwd_from.from_id.channel_id
+      else:
+        return '???'
+      
+    def tryGetIdFromChat(msg: Message, author_id: int) -> int:
+      if hasattr(msg,'from_id') and hasattr(msg.from_id,'user_id') and hasattr(msg,'peer_id') and hasattr(msg.peer_id,'chat_id'):
+      # in a chat, author is different from dialog
+        if msg.from_id.user_id != msg.peer_id.chat_id:
+          return msg.from_id.user_id
+      return author_id
+    
+    author_id = 0
+    author_name = ''
+    if hasattr(msg,'fwd_from') and msg.fwd_from:
+      if msg.fwd_from.from_name:
+        author_name = msg.fwd_from.from_name
+      else:
+        author_id = getIdFromForwarded(msg)
+        
+    author_id = tryGetIdFromChat(msg, author_id)
+            
+    if author_id:
+      #print(f"\nlooking for entity with id {author_id}")
+      found = await self.getNamesByPeerId(author_id)
+      if found:  author_name = found
+      
+    if author_name:
+      setattr(msg, 'x_author_name', author_name)
+    if author_id:
+      setattr(msg, 'x_author_id', author_id)
+  
+  async def getNamesByPeerId(self, author_id: Union[str,int]) -> str:
+    try:
+      entity = await self.client.get_entity(int(author_id)) # search for id requires int argument
+      # get_input_entity() does not give names
+      if entity and hasattr(entity,'first_name') and hasattr(entity,'last_name') and (entity.first_name or entity.last_name):
+      #print(f"first:{entity.first_name},last:{entity.last_name}")
+        f = '' if not entity.first_name else str(entity.first_name) # None -> ''
+        l = '' if not entity.last_name else str(entity.last_name)
+        return f + l
+      elif entity and entity.username:
+        return str(entity.username)
+      elif entity:
+        return 'noname'
+      else:
+        print(f"\nname not found for {author_id}")
+        return ''
+    except Exception as err:
+      print(f" error:{err}")
+      return ''
+  
+  async def addAllAuthorNames(self, msgList: List[Message]) -> None:
+    for msg in msgList:
+      await self.addAuthorName(msg)

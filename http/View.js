@@ -134,12 +134,13 @@ tgc.View = function() {
   
   function msg2base(m) {
     var prefix, re='', media='', mediaLink = '', cn = '', postfix = '';
-    ['action', 'media', 'text', 'date'].forEach(function(s) {
+    ['action', 'media', 'text', 'date', 'prefix', 'fwdFrom'].forEach(function(s) {
       if (! m[s]) m[s] = '';
       else {
-        m[s]=m[s].replace('&','&amp;');
-        m[s]=m[s].replace('<','&lt;');
-        m[s]=m[s].replace('>','&gt;');
+        m[s] = tgc.utils.escapeHtml(m[s]);
+        //m[s]=m[s].replace('&','&amp;');
+        //m[s]=m[s].replace('<','&lt;');
+        //m[s]=m[s].replace('>','&gt;');
       }
     });
     prefix = m.prefix || '_';

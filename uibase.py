@@ -28,7 +28,11 @@ class UiBase():
     r['isMine']  = hasattr(msg,'from_id') and hasattr(msg.from_id, 'user_id') and msg.from_id.user_id == myid
     r['prefix']  = '>' if r['isMine'] else '<'
     r['unread']  = False if r['isMine'] else isUnread
-    r['fwdFrom'] = '' if not (hasattr(msg,'fwd_from') and msg.fwd_from and msg.fwd_from.from_name) else msg.fwd_from.from_name
+    r['fwdFrom'] = ''
+    if hasattr(msg,'x_author_name') :
+      r['fwdFrom'] = msg.x_author_name
+    elif hasattr(msg,'x_author_id') :
+      r['fwdFrom'] = str(msg.x_author_id)
     r['id']      = msg.id
     media = ''
     if msg.file:

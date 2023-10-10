@@ -5,6 +5,7 @@ https://github.com/TrueWatcher/telegram_desktop
 1.7.0  07.10.2023 added Forward command to consoleui.py and cli.py, refactored client.py
 1.7.1  08.10.2023 added type annotations to several files
 1.7.2  09.10.2023 updated venv to 3.9, code improvements
+1.8.0  10.10.2023 fixed rendering of fwd_from
 """
 from telethon import TelegramClient, events
 import asyncio
@@ -71,7 +72,10 @@ def setTGhandlers(cli, cui):
   @client.on(events.NewMessage)
   async def newMessageHandler(event):
     command = ['consumeMessage', event]
-    ret = await cli.run(cui, *command)
+    try:
+      ret = await cli.run(cui, *command)
+    except MyException as err:
+      cui.presentAlert(err)
       
   @client.on(events.MessageRead)
   async def messageReadHandler(event):
