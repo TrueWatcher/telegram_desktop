@@ -5,7 +5,6 @@ import json as json
 import os
 import sys
 from datetime import datetime
-from unreadmanager import UnreadManager
 from typing import List, Dict, Union
 from telethon.tl.custom.message import Message
 from telethon.tl.custom.dialog import Dialog
@@ -34,17 +33,22 @@ class Inventory:
     # oredered dictionaries
     self.dialogs: Dict[str, Dialog] = {}
     self.messages: Dict[str, Message] = {}
+    self.cachedAuthors: Dict[int, str] = {}
     self.me = self.Nme( 0, "Neo", "000000" )
-    self.um = UnreadManager(self)
+    #self.um = UnreadManager(self)
     self.ipc: Dict[str, asyncio.Queue] = {}
     self.params: Dict[str,DataType] = {}
     self.mm = self.MediaManager(self)
+    
+  def addBackwardDependencies(self, um) -> None:
+    from unreadmanager import UnreadManager
+    self.um: UnreadManager = um
   
   def clearData(self) -> None:
     self.dialogs = {}
     self.messages = {}
     self.me = self.Nme( 0, "Neo", "000000" )
-    self.um = UnreadManager(self)
+    self.um.clear()
   
   def setMe(self, aMe) -> None:
     self.me = aMe

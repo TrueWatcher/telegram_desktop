@@ -15,15 +15,25 @@ class UiBase():
     self.dateFormat2 = '%-H:%M'
     self.dateFormat1 = '%b %-d %-H:%M'
     self.dateFormat0 = '%Y %b %-d %-H:%M'
-    
+  
+  @staticmethod
+  def mergeNames(entity) -> str:
+    if entity and hasattr(entity,'first_name') and hasattr(entity,'last_name') and (entity.first_name or entity.last_name):
+      f = '' if not entity.first_name else str(entity.first_name) # None -> ''
+      l = '' if not entity.last_name else str(entity.last_name)
+      return f + l
+    return ''
+  
   def presentNames(self, user) -> str:
-    fn = '' if not hasattr(user,'first_name') or not user.first_name else user.first_name
+    firstAndLast = self.mergeNames(user)
+    #fn = '' if not hasattr(user,'first_name') or not user.first_name else user.first_name
     un = '' if not hasattr(user,'username') or not user.username else user.username
     ph = '' if not hasattr(user,'phone') or not user.phone else user.phone
-    return f"{fn} / {un} / {ph}"   
+    return f"{firstAndLast} / {un} / {ph}"   
   
-  def repackMessage(self, msg: Message, myid: int, isUnread: bool = False, mediaLink: Union[str,None] = None, isDelivered: bool = True) -> Union[DataDict,None]:
-    if msg is None: return None
+  def repackMessage(self, msg: Message, myid: int, isUnread: bool = False, mediaLink: Union[str,None] = None, isDelivered: bool = True) -> DataDict:
+    #if msg is None: return None
+    assert not not msg
     r: DataDict = {}
     r['isMine']  = hasattr(msg,'from_id') and hasattr(msg.from_id, 'user_id') and msg.from_id.user_id == myid
     r['prefix']  = '>' if r['isMine'] else '<'
@@ -62,7 +72,7 @@ class UiBase():
     r['replyToId'] = '' if not hasattr(msg,"reply_to") or not msg.reply_to or not hasattr(msg.reply_to,"reply_to_msg_id") or not msg.reply_to.reply_to_msg_id else msg.reply_to.reply_to_msg_id
     return r
   
-  def repackMessage2(self, msg: Message, dn: str, inv: Inventory) -> Union[DataDict,None]:
+  def repackMessage2(self, msg: Message, dn: str, inv: Inventory) -> DataDict:
     r = self.repackMessage( msg, inv.getMyid(), inv.um.isUnread(dn, msg), inv.mm.getMediaLink(dn, msg.id), inv.um.isDelivered(dn, msg) )
     return r
   

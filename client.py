@@ -6,6 +6,7 @@ https://github.com/TrueWatcher/telegram_desktop
 1.7.1  08.10.2023 added type annotations to several files
 1.7.2  09.10.2023 updated venv to 3.9, code improvements
 1.8.0  10.10.2023 fixed rendering of fwd_from
+1.8.1  11.10.2023 more annotations and cleaning
 """
 from telethon import TelegramClient, events
 import asyncio
@@ -15,6 +16,7 @@ from aiohttp_index import IndexMiddleware
 from myexception import MyException
 from consoleui import ConsoleUi
 from inventory import Inventory
+from unreadmanager import UnreadManager
 from cli import Cli
 from webbridge import WebBridge
 import json
@@ -32,6 +34,7 @@ def startUp():
   global client, cui, cli, inv, params
   print('tgtlc, a free Telegram desktop client by TrueWatcher 2022-2023')
   inv = Inventory()
+  inv.addBackwardDependencies(UnreadManager(inv))
   params = inv.loadParams()
   #print(params)    
   client = TelegramClient('anon', params['apiId'], params['apiHash'])
@@ -64,7 +67,7 @@ async def consoleHandler():
       if ret == -1:  
         return 0 # quits the app
     except MyException as err:
-      cui.presentAlert(err)
+      cui.presentAlert(str(err))
 
 # attach listeners for incoming messages from the Telegram client    
 
@@ -75,7 +78,7 @@ def setTGhandlers(cli, cui):
     try:
       ret = await cli.run(cui, *command)
     except MyException as err:
-      cui.presentAlert(err)
+      cui.presentAlert(str(err))
       
   @client.on(events.MessageRead)
   async def messageReadHandler(event):
@@ -93,8 +96,8 @@ async def handlerAjax(request):
   #if request.can_read_body:
   #  print(f"body text:{await request.text()}") breaks multipart reader
   
+  wb = WebBridge()
   try:
-    wb = WebBridge()
     await wb.parseRequest(request, inv)
     command = wb.getCommand()
     print(f"webUi entry mode:{wb.getMode()}, currentDialog:{wb.getCurrentDialog()}")

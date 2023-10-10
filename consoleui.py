@@ -18,7 +18,7 @@ class ConsoleUi(UiBase):
     super().__init__()
     print(f"Your timezone:{self.localTimeZone}") 
 
-  def inputToCommand(self, line: bytearray, inv: Inventory) -> Sequence[Union[str,int]]:
+  def inputToCommand(self, line: bytes, inv: Inventory) -> Sequence[Union[str,int]]:
     assert self.mode in self.MODES, f"unknown mode {self.mode}" 
     dn = self.getCurrentDialog()
     line2 = line.decode().rstrip('\n')
@@ -129,8 +129,7 @@ class ConsoleUi(UiBase):
         caption = parts[0]
       else:  raise MyException("Cannot guess which part is the file")
     return [ caption, fileName.strip("'\" ") ]
-    
-    
+        
   def getCurrentDialog(self) -> Dialog:
     return self.currentDialog
   
@@ -156,8 +155,8 @@ class ConsoleUi(UiBase):
       
   def presentMessage(self, msg: Message, myid: int, isUnread: bool = False) -> None:
     r = self.repackMessage(msg, myid, isUnread = False)
-    if r is None: return
-    prefix: str = f"\033[1;96m{r['prefix']}\033[0m" if isUnread else str(r['prefix'])
+    #if r is None: return
+    prefix: str = f"\033[1;96m{r['prefix']}\033[0m" if isUnread else str(r['prefix']) # colorize
     if isinstance(r['fwdFrom'],str) and r['fwdFrom']:
       prefix = prefix + r['fwdFrom'] + prefix 
     re: str = '' if not r['replyToId'] else f"Re:{r['replyToId']} "

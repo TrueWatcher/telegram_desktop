@@ -144,10 +144,6 @@ class WebBridge(UiBase):
     self.result = self.repackMessage(msg, myid, isUnread, mediaLink, isDelivered)
     return self.result
   
-  #def presentNames(self, sender):
-  #  self.result =  super().presentNames(sender)
-  #  return self.result
-  
   def presentNewMessage(self, msgEvent, name: str, myid: int) -> None:
     r = self.repackMessage(msgEvent.message, myid, True, '', False)
     r['from'] = name

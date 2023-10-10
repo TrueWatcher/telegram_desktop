@@ -200,7 +200,7 @@ class Cli:
       #ui.redraw(self.inv)
       return 0
     
-    elif act == 'send2': # name|phone, text_no_spaces
+    elif act == 'send2': # name|phone, text
       if not arg0 or not arg1:
         raise MyException(f"Provide name and text")
       try:
@@ -431,13 +431,13 @@ class Cli:
     return msg
 
   async def addAuthorName(self, msg: Message) -> None:
-    def getIdFromForwarded(msg: Message) -> str:
+    def getIdFromForwarded(msg: Message) -> int:
       if hasattr(msg.fwd_from,'from_id') and hasattr(msg.fwd_from.from_id,'user_id'):
         return msg.fwd_from.from_id.user_id
       elif hasattr(msg.fwd_from,'from_id') and hasattr(msg.fwd_from.from_id,'channel_id'):
         return msg.fwd_from.from_id.channel_id
       else:
-        return '???'
+        return -1
       
     def tryGetIdFromChat(msg: Message, author_id: int) -> int:
       if hasattr(msg,'from_id') and hasattr(msg.from_id,'user_id') and hasattr(msg,'peer_id') and hasattr(msg.peer_id,'chat_id'):
@@ -457,8 +457,16 @@ class Cli:
     author_id = tryGetIdFromChat(msg, author_id)
             
     if author_id:
-      #print(f"\nlooking for entity with id {author_id}")
-      found = await self.getNamesByPeerId(author_id)
+      #print(f"\nlooking for entity with id {author_id} ")
+      found = ''
+      if author_id in self.inv.cachedAuthors:
+        found = self.inv.cachedAuthors[author_id]
+        #print(f" : cached {found}")
+      else:
+        found = await self.getNamesByPeerId(author_id)
+        if found:  
+          self.inv.cachedAuthors[author_id] = found
+          #print(f" : queried {found}")
       if found:  author_name = found
       
     if author_name:
@@ -470,18 +478,15 @@ class Cli:
     try:
       entity = await self.client.get_entity(int(author_id)) # search for id requires int argument
       # get_input_entity() does not give names
-      if entity and hasattr(entity,'first_name') and hasattr(entity,'last_name') and (entity.first_name or entity.last_name):
-      #print(f"first:{entity.first_name},last:{entity.last_name}")
-        f = '' if not entity.first_name else str(entity.first_name) # None -> ''
-        l = '' if not entity.last_name else str(entity.last_name)
-        return f + l
-      elif entity and entity.username:
-        return str(entity.username)
-      elif entity:
-        return 'noname'
-      else:
+      if not entity:
         print(f"\nname not found for {author_id}")
         return ''
+      if UiBase.mergeNames(entity):
+        return UiBase.mergeNames(entity)
+      elif entity.username:
+        return str(entity.username)
+      else:
+        return 'noname'
     except Exception as err:
       print(f" error:{err}")
       return ''
