@@ -5,6 +5,7 @@ import json as json
 import os
 import sys
 from datetime import datetime
+from unreadmanager import UnreadManager
 from typing import List, Dict, Union
 from telethon.tl.custom.message import Message
 from telethon.tl.custom.dialog import Dialog
@@ -17,13 +18,14 @@ class Inventory:
   
   Nme = namedtuple('Nme', 'id username phone')
   defaultParams = {
-    'apiId': 0,
-    'apiHash': '',
-    'maxMessages': 20,
-    'helpFile' : 'help.txt',
-    'downloadPath': 'Downloads/',
+    'apiId'        : 0,
+    'apiHash'      : '',
+    'maxMessages'  : 20,
+    'helpFile'     : 'help.txt',
+    'downloadPath' : 'Downloads/',
     'uploadTmpPath': 'uploadTmp/',
-    'previewLink': False
+    'webUiPort'    : 8080,
+    'previewLink'  : False
   }
   paramsFile = 'params.json'
   
@@ -32,18 +34,21 @@ class Inventory:
       raise MyException(f"Python before 3.6 cannot run this")
     # oredered dictionaries
     self.dialogs: Dict[str, Dialog] = {}
-    self.messages: Dict[str, Message] = {}
+    self.messages: Dict[str, List[Message]] = {}
     self.cachedAuthors: Dict[int, str] = {}
     self.me = self.Nme( 0, "Neo", "000000" )
-    #self.um = UnreadManager(self)
+    self.um: UnreadManager = UnreadManager(self)
     self.ipc: Dict[str, asyncio.Queue] = {}
     self.params: Dict[str,DataType] = {}
     self.mm = self.MediaManager(self)
-    
+  
+  '''
   def addBackwardDependencies(self, um) -> None:
     from unreadmanager import UnreadManager
-    self.um: UnreadManager = um
-  
+    #self.um: UnreadManager = um
+    assert isinstance(um, UnreadManager)
+    setattr(self, 'um', um)
+  '''
   def clearData(self) -> None:
     self.dialogs = {}
     self.messages = {}
@@ -85,7 +90,7 @@ class Inventory:
   def addDialog(self, dialog: Dialog) -> None:
     self.dialogs[dialog.name] = dialog
     
-  def addMessageList(self, dn: str, msgList: Dict) -> None:
+  def addMessageList(self, dn: str, msgList: List[Message]) -> None:
     assert dn in self.dialogs
     self.messages[dn] = msgList
     
@@ -128,7 +133,7 @@ class Inventory:
     assert dn in self.messages
     return self.dialogs[dn].entity
   
-  def replaceMessages(self, dn: str, msgList: Dict) -> None:
+  def replaceMessages(self, dn: str, msgList: List[Message]) -> None:
     assert dn in self.messages
     assert isinstance(msgList, list)
     self.messages[dn] = msgList
@@ -196,9 +201,9 @@ class Inventory:
     dn = tuples[i][0]
     return dn
   
-  def enqueueIpc(self, message: Message) -> List:
+  def enqueueIpc(self, message: Message) -> List[str]:
     if not self.ipc:  return []
-    res = []
+    res: List[str] = []
     for key,q in self.ipc.items():
       if not q:  continue
       q.put_nowait(message)

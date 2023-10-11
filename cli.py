@@ -118,7 +118,7 @@ class Cli:
         newMsg = ui.repackMessage(msg, self.inv.getMyid(), True)
         if newMsg is None:  return 0
         newMsg["from"] = found if found is not None else name
-        kk = self.inv.enqueueIpc( {'newMessage': newMsg} )
+        kk: List[str] = self.inv.enqueueIpc( {'newMessage': newMsg} )
         for key in kk:  print(f"queued newMessage {newMsg['id']} to {key}")
       
       return 0
@@ -132,8 +132,9 @@ class Cli:
       found = self.inv.findDialogByPeerId(peer)
       if found:
         self.inv.um.addDelivered(found, maxId)
-        kk = self.inv.enqueueIpc( {'messageRead': {'from': found, 'id': maxId} } )
-        for key in kk:  print(f"queued messageRead {maxId} to {key}")
+        if self.inv.ipc:
+          kk = self.inv.enqueueIpc( {'messageRead': {'from': found, 'id': maxId} } )
+          for key in kk:  print(f"queued messageRead {maxId} to {key}")
       else:
         print(f"messageRead: peer {peer} not found, maxId={maxId}")
             

@@ -2,14 +2,19 @@ import json as json
 import os
 from datetime import datetime
 from myexception import MyException
-from typing import Dict, Union, List, Tuple
-from inventory import Inventory
+from typing import Dict, Union, List, Tuple, Any
 from telethon.tl.custom.message import Message
+
+from typing import TYPE_CHECKING
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+if TYPE_CHECKING:
+  from inventory import Inventory # circuler import
+else: Inventory = Any
 
 Int2 = List[int]
 
 class UnreadManager():
-    def __init__(self, inv: Inventory) -> None:
+    def __init__(self, inv: 'Inventory') -> None:
       self.dialogsAccessed: Dict[str,Int2] = {}
       self.accessFile: str = 'access.json'
       self.inv = inv

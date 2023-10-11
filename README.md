@@ -2,7 +2,7 @@ tgtlc, a free desktop Telegram client,
 written in Python and based on Telethon and asyncio libraries.
 
 It provides two user interfaces:
-- console interface, with basic message handling from a terminal window and keyboard, intended for rapid sharing of files and links over Telegram ([screnshot 1](screenshots/tgtlc_1-7-0_dialog_screen.png))
+- console interface, with basic message handling from a terminal window and keyboard, intended for rapid sharing of files and links over Telegram ([screnshot 1](screenshots/tgtlc_1_8_2_dialog_message.png))
 - web interface, exposed at http://localhost:8080/index.html is more colourful and supports also features like read receipts and reply-to
 
 The app has been tested with Python 3.8 and 3.9 on Ubuntu 20.04 and Linux Mint DE. Web UI tested with Chromium and Firefox, recent as of 2023. Not tested (yet) on Windows or MacOS.
