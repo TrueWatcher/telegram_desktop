@@ -9,7 +9,7 @@ tgc.Controller=function() {
   
   this.setup = function() {
     view = new tgc.View();
-    view.setHandlers(arbitraryCommand, sendMessage, sendFile, selectDialog, deleteMessage, reloadDialog, closeDialog, downloadMedia, reloadBuddies);
+    view.setHandlers(arbitraryCommand, sendMessage, sendFile, selectDialog, forwardMessage, deleteMessage, reloadDialog, closeDialog, downloadMedia, reloadBuddies);
     view.showAlertB("Connecting...");
     connector = new tgc.Connector(tgc.serverParams, tgc.userParams);
     connector.pull.registerPullCallback(_this.takeResponse);
@@ -22,6 +22,7 @@ tgc.Controller=function() {
   function sendMessage(dn, text, replyTo) { connector.push.sendMessage(dn, text, replyTo); }
   function sendFile(dn, text, file, replyTo) { connector.push.sendFile(dn, text, file, replyTo); }
   function selectDialog(targetDn, dn) { connector.push.sendSelectDialog(targetDn, dn); }
+  function forwardMessage(dn, msgId, toName) { connector.push.sendForwardMessage(dn, msgId, toName); }
   function deleteMessage(dn, id, forAll) { 
     //alert(`dn:${dn}, id:${id}, forAll:${forAll}`);
     connector.push.sendDeleteMessage(dn, id, forAll);
@@ -58,8 +59,10 @@ tgc.Controller=function() {
     }
     if (resp.dialog) {
       var rd = resp.dialog;
-      if ( view.getDn() && (rd.name != view.getDn()) ) {
-        //view.showAlertD("Changing dialog:"+ view.getDn()+" > "+rd.name );
+      var current = view.getDn();
+      if ( current && (rd.name != current) ) {
+        //view.showAlertD("Changing dialog:"+ current+" > "+rd.name );
+        view.clearMsgIds();
       }
       if ( buddyList.indexOf(rd.name) < 0 ) {
         view.showAlertB("Got unknown dialog:"+rd.name);

@@ -423,6 +423,10 @@ tgc.Connector.PushLink=function(respondrUri, onData, onHang, serverParams, userP
     ajaxerR.postAsFormData(stuff);
   };
   
+  this.sendForwardMessage = function(dn, msgId, toName) {
+    this.sendCommandWGet(["forwardMessage", dn, 'id',  msgId, 'n', toName], dn);
+  };
+  
   this.sendDeleteMessage = function(dn, id, forAll) {
     this.sendCommandWGet(["deleteMessage", dn, 'id', id, forAll], dn);
   };

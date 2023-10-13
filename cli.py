@@ -198,7 +198,7 @@ class Cli:
         raise MyException(f"Failed to forward:{type(retMsg)}!")
       self.inv.addMessage(toName, retMsg) #  dn, msg
       ui.presentAlert(f"forwarded {msg.id} to {toName}")
-      #ui.redraw(self.inv)
+      #if isinstance(ui, WebBridge):  ui.redraw(self.inv)
       return 0
     
     elif act == 'send2': # name|phone, text

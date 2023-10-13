@@ -9,6 +9,7 @@ https://github.com/TrueWatcher/telegram_desktop
 1.8.1  11.10.2023 more annotations and cleaning
 1.8.2  11.10.2023 refactored client.py
 1.9.0  12.10.2023 added bash scripts and icon
+1.10.0 13.10.2023 added Forward command to GUI
 """
 from telethon import TelegramClient, events
 import asyncio

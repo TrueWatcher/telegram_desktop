@@ -30,12 +30,18 @@ tgc.View = function() {
   
   this.showBuddies = function(buddyList) {
     //$("buddyListD").innerHTML = "List of "+buddyList.length+" buddies";
-    var i=0, ih='';
+    var i=0, ih='', options=[], bn;
     for (i; i < buddyList.length; i+=1) {
       ih += buddy2str( buddyList[i] );
+      bn = buddyList[i].name;
+      options.push([bn, bn]);
     }
     $("buddyListD").innerHTML = ih;
     setBuddyHandlers($("buddyListD"), this.selectDialog);
+    tgc.utils.clearSelect('fwdToSel');
+    options.unshift(['-none-','-none-']);
+    //console.log(tgc.utils.dumpArray(options));
+    tgc.utils.fillSelect('fwdToSel',options,0);
   };
   
   this.selectDialog = function() { alert("redefine this"); };
@@ -325,7 +331,7 @@ tgc.View = function() {
     return res;  
   }
   
-  this.setHandlers = function(arbitraryCommand, sendMessage, sendFile, selectDialog, deleteMessage, reloadDialog, closeDialog, downloadMedia, reloadBuddies) {
+  this.setHandlers = function(arbitraryCommand, sendMessage, sendFile, selectDialog, forwardMessage, deleteMessage, reloadDialog, closeDialog, downloadMedia, reloadBuddies) {
     $("sendCmdBtn").onclick = function() {
       var cmdArr = assembleCommand();
       var aDn = dn || '';
@@ -361,6 +367,23 @@ tgc.View = function() {
     this.deleteMessage = deleteMessage;
     setupDrop($("deleteMsg1Btn"), '', this.deleteMessage);
     setupDrop($("deleteMsg2Btn"), 'true', this.deleteMessage);
+    setupDrop($("fwdIdInp"), '', function(dn, eid) { _this.setFwdId(dn, eid); _this.handleForward(); } );
+    $('fwdToSel').onchange = function() { _this.handleForward(); }; //this.handleForward; fails
+    this.handleForward = function() {
+    // send the command as soon as both id and name are set
+      var fwdId = + ($("fwdIdInp").value);
+      //alert(fwdId);
+      if (! fwdId || fwdId != fwdId) return false; // empty or NaN
+      var fwdToName = tgc.utils.getSelect('fwdToSel');
+      //alert(fwdToName);
+      if ( ! fwdToName || fwdToName == '-none-') return false; // no target name set
+      console.log("About to forward #"+fwdId+" to "+fwdToName);
+      forwardMessage(dn, fwdId, fwdToName);
+      incCounts("buddyListD", fwdToName, true );
+      if (fwdToName != dn) { this.setDialogUndelivered(fwdToName, true); }
+      else { incCounts("dialogD", fwdToName, true ); }
+      return false;
+    };
     setupDrop($("replyToInp"), '', this.setReplyTo);
     $("reloadDialogBtn").onclick = function() {
       reloadDialog(dn);
@@ -410,11 +433,21 @@ tgc.View = function() {
       if ( ! eid.startsWith(messageIdPrefix) ) { return false; }
       eid = eid.split('_')[1];
       cmd(dn, eid, arg);
+      return false;
     });
   }
   
   this.setReplyTo = function(dn, eid) {
     $("replyToInp").value = eid;
+  };
+  
+  this.setFwdId = function(dn, eid) {
+    $("fwdIdInp").value = eid;
+  };
+  
+  this.clearMsgIds = function() {
+    $("replyToInp").value = '';
+    $("fwdIdInp").value = '';
   };
   
   function toggleHideable() {

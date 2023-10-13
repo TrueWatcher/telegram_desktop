@@ -104,3 +104,45 @@ tgc.utils.escapeHtml=function(text) {
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
 };
+
+
+tgc.utils.getSelect=function(id) {
+  var el=document.getElementById(id);
+  if (el.selectedIndex === null) return null;
+  var v=el.options[el.selectedIndex].value;
+  return v;  
+};
+
+tgc.utils.clearSelect=function(id) {
+  var el=document.getElementById(id);
+  var acn = Array.from(el.children);
+  for (var i = 0; i < acn.length; i++) {
+    if (acn[i].nodeName == 'OPTION') {
+      el.removeChild(acn[i]);
+    }
+  }  
+};
+
+tgc.utils.setSelect=function(id,value) {
+  var el=document.getElementById(id);
+  if ( ! el) throw new Error("Wrong id="+id);
+  el.value=value;
+  if (el.selectedIndex < 0) throw new Error("Invalid value="+value+" for "+id);
+  document.activeElement.blur();// otherwise it will catch onkeypressed
+};
+
+tgc.utils.fillSelect=function(id,options,selectedIndex) {
+  var i=0,o,
+      el=document.getElementById(id);
+  if ( ! el) throw new Error("Wrong id="+id);
+  for (; i<options.length; i+=1) {
+    o=document.createElement("OPTION");
+    if ( ! (typeof options[i][0] === "string")) throw new Error("Non-string name:"+options[i][0]);
+    if ( ! (typeof options[i][1] === "string")) throw new Error("Non-string value:"+options[i][1]);
+    o.innerHTML=options[i][0];
+    o.value=options[i][1];
+    if (i == selectedIndex) o.selected="selected";
+    el.appendChild(o);
+    o=null;
+  }
+};
