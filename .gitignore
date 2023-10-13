@@ -4,6 +4,7 @@
 /__*
 *.json
 *.session
+*.desktop
 /.pytype/
 pytype.*
 /.mypy_cache/

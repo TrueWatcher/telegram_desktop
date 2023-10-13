@@ -8,6 +8,7 @@ https://github.com/TrueWatcher/telegram_desktop
 1.8.0  10.10.2023 fixed rendering of fwd_from
 1.8.1  11.10.2023 more annotations and cleaning
 1.8.2  11.10.2023 refactored client.py
+1.9.0  12.10.2023 added bash scripts and icon
 """
 from telethon import TelegramClient, events
 import asyncio

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=tgtlc
+GenericName=Telegram desktop client
+Comment=
+Categories=Network
+Exec=bash '@dir@/run.sh'
+Terminal=true
+Icon=@dir@/telegram.svg
