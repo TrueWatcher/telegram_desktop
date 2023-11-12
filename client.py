@@ -10,6 +10,7 @@ https://github.com/TrueWatcher/telegram_desktop
 1.8.2  11.10.2023 refactored client.py
 1.9.0  12.10.2023 added bash scripts and icon
 1.10.0 13.10.2023 added Forward command to GUI
+1.11.0 12.11.2023 adapted to Windows 10
 """
 from telethon import TelegramClient, events
 import asyncio
@@ -33,43 +34,60 @@ class Client:
     print('tgtlc, a free Telegram desktop client by TrueWatcher 2022-2023')
     self.inv: Inventory              = Inventory()
     self.params: Dict[str,DataType]  = self.inv.loadParams()
-    #print(params) 
+    #print(params)
     self.cui: ConsoleUi              = ConsoleUi()
     self.client: TelegramClient      = TelegramClient('anon', self.params['apiId'], self.params['apiHash'])
     print("connected to Telegram")
     self.cli: Cli                    = Cli(self.inv, self.params, self.client)
-    
-  def startUp(self) -> None:  
+
+  def startUp(self) -> None:
     print("setting up the main loop...")
     with self.client:
       self.setTGhandlers()
       self.client.loop.create_task(self.loadMessages())
       self.client.loop.create_task(self.webserver())
-      self.client.loop.run_until_complete(self.consoleHandler())
+      self.client.loop.run_until_complete(self.consoleHandler_linux() if self.params['isLinux'] else self.consoleHandler_windows())
     print("Bye!")
 
   # define keyboard listener
 
-  async def consoleHandler(self) -> int:
+  async def consoleHandler_windows(self) -> int:
+    print("console interface started")
+    # https://stackoverflow.com/questions/31510190/aysncio-cannot-read-stdin-on-windows
+    loop = self.client.loop
+    while True:
+      line = await loop.run_in_executor(None, sys.stdin.readline)
+      #print('Got line:', line, end='')
+      try:
+        command = self.cui.inputToCommand(line, self.inv)
+        ret = await self.cli.run(self.cui, *command)
+        if ret == -1:
+          return 0 # quits the app
+      except MyException as err:
+        self.cui.presentAlert(str(err))
+
+    return 0  # not to get here
+
+
+  async def consoleHandler_linux(self) -> int:
     print("console interface started")
     # https://stackoverflow.com/questions/35223896/listen-to-keypress-with-asyncio
     # Create a StreamReader with the default buffer limit of 64 KiB.
     reader = asyncio.StreamReader()
-    pipe = sys.stdin
-    await self.client.loop.connect_read_pipe(lambda: asyncio.StreamReaderProtocol(reader), pipe)
+    await self.client.loop.connect_read_pipe(lambda: asyncio.StreamReaderProtocol(reader), sys.stdin)
 
     async for line in reader:
       try:
         command = self.cui.inputToCommand(line, self.inv)
         ret = await self.cli.run(self.cui, *command)
-        if ret == -1:  
+        if ret == -1:
           return 0 # quits the app
       except MyException as err:
         self.cui.presentAlert(str(err))
-        
+
     return 0  # not to get here
 
-  # attach listeners for incoming messages of the Telegram client    
+  # attach listeners for incoming messages of the Telegram client
 
   def setTGhandlers(self) -> None:
     @self.client.on(events.NewMessage)
@@ -79,7 +97,7 @@ class Client:
         ret = await self.cli.run(self.cui, *command)
       except MyException as err:
         self.cui.presentAlert(str(err))
-        
+
     @self.client.on(events.MessageRead)
     async def messageReadHandler(event):
       command = ['consumeMessageRead', event]
@@ -95,7 +113,7 @@ class Client:
     #print(f"query:{request.query}")
     #if request.can_read_body:
     #  print(f"body text:{await request.text()}") breaks multipart reader
-    
+
     wb = WebBridge()
     try:
       await wb.parseRequest(request, self.inv)
@@ -105,7 +123,7 @@ class Client:
       res = wb.getResult()
     except MyException as err:
       res = wb.presentAlert(str(err))
-    
+
     print(f"webUi exit mode:{wb.getMode()}, currentDialog:{wb.getCurrentDialog()}")
     print(f"my response:{res}")
     return web.json_response(res)
@@ -117,13 +135,13 @@ class Client:
     uid = str(uuid.uuid4())
     inv = self.inv
     inv.ipc[uid] = asyncio.Queue()
-    
+
     async def resend(wsr): # wsr is required, uid is not
       #print("run resend")
       await asyncio.sleep(1)
       while True:
         #print(f"cycle resend {wsr} {uid}")
-        if not inv.ipc or not inv.ipc[uid]:  
+        if not inv.ipc or not inv.ipc[uid]:
           #print(f"finishing resend {uid}")
           wsr = None
           return 0
@@ -135,9 +153,9 @@ class Client:
         act = list(msg.keys())[0]
         print(f"ws sent {act} {msg[act]['id']} to {uid}")
         await wsr.send_json(msg)
-      
-    rt = self.client.loop.create_task(resend(wsr))  
-    
+
+    rt = self.client.loop.create_task(resend(wsr))
+
     async for msg in wsr:
       if msg.type == WSMsgType.TEXT:
         print(f"Ws got {msg.data}")
@@ -146,10 +164,10 @@ class Client:
         else:
           reply = '---' #reply = "ws is up"
           await wsr.send_str('{"alert": "'+reply+'", "wsKey": "'+uid+'"}')
-          
+
       elif msg.type == WSMsgType.ERROR:
         print('ws connection closed with exception %s' % wsr.exception())
-    
+
     #inv.ipc[uid] = None
     if inv.ipc[uid]:  del inv.ipc[uid]
     await wsr.close()
@@ -157,7 +175,7 @@ class Client:
     print(f"websocket connection {uid} closed")
     return wsr
 
-  # put all web appliances together  
+  # put all web appliances together
 
   async def webserver(self) -> None:
     port = int(self.params['webUiPort'])
@@ -174,8 +192,8 @@ class Client:
     await runner.setup()
     site = web.TCPSite(runner, 'localhost', port)
     await site.start()
-    print(f"Web-interface started on http://127.0.0.1:{port}")    
-      
+    print(f"Web-interface started on http://127.0.0.1:{port}")
+
   # load messages from the Telegram client (one shot)
 
   async def loadMessages(self) -> int:

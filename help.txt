@@ -16,8 +16,8 @@ exit     - quit the app
 <command>~<args> - execute the command
 
 ----- dialog screen (message list) -----
-m                          - switch to the message screen
-f                          - switch to the file screen
+m                          - switch to the message prompt
+f                          - switch to the file prompt
 df <number>                - download and save file from number'th message (0 for the lowermost)
                              the saving folder defaults to "app_folder/Downloads", but may be set in params.json
                              images have no names on Telegram, thus will be named arbitrarily by timestamp

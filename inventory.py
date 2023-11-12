@@ -4,6 +4,7 @@ import json5 as json5
 import json as json
 import os
 import sys
+import platform
 from datetime import datetime
 from unreadmanager import UnreadManager
 from typing import List, Dict, Union
@@ -18,6 +19,7 @@ class Inventory:
   
   Nme = namedtuple('Nme', 'id username phone')
   defaultParams = {
+    'isLinux'      : platform.system() == 'Linux',
     'apiId'        : 0,
     'apiHash'      : '',
     'maxMessages'  : 20,
