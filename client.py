@@ -11,6 +11,7 @@ https://github.com/TrueWatcher/telegram_desktop
 1.9.0  12.10.2023 added bash scripts and icon
 1.10.0 13.10.2023 added Forward command to GUI
 1.11.0 12.11.2023 adapted to Windows 10
+1.11.1 14.07.2025 added setup.sh and note on python3.12
 """
 from telethon import TelegramClient, events
 import asyncio

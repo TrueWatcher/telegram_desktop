@@ -6,7 +6,8 @@ It provides two user interfaces:
 - web interface, exposed at http://localhost:8080/index.html is more colourful and supports also features like read receipts and reply-to
 
 The app has been tested with Python 3.9 on Ubuntu 20.04, Linux Mint DE 5 and Windows 10.
-Web UI tested with Chromium and Firefox, recent as of 2023. Not tested (yet) on Windows < 10 or MacOS.
+With Ubuntu 24.04, it fails to install with the native Python 3.12, but works normally with 3.10.
+Web UI tested with Chromium and Firefox, recent as of 2023-2025. Not tested (yet) on Windows < 10 or MacOS.
 
 Installation:
 - make sure you have Python >= 3.8 installed
@@ -45,6 +46,12 @@ Installation:
         venv/bin/python3.9 client.py
 
   in the terminal window you will be prompted to enter your phone number, confirmation code (sent to your other Telegram device), and password (if you have 2FA). After successful login, your credentials will be stored in a file and not asked for agatn. To logout, just delete the session file.
+
+- optionally, create a desktop icon:
+
+        cd telegram_desktop
+        bash setup.sh
+        mv telegram_client.desktop ~/Desktop/
 
 Instructions for the console UI [here](help.txt).
 
