@@ -12,6 +12,7 @@ https://github.com/TrueWatcher/telegram_desktop
 1.10.0 13.10.2023 added Forward command to GUI
 1.11.0 12.11.2023 adapted to Windows 10
 1.11.1 14.07.2025 added setup.sh and note on python3.12
+1.12.0 11.03.2026 added socks5 proxy capability, pysocks module, updated telethon
 """
 from telethon import TelegramClient, events
 import asyncio
@@ -37,8 +38,10 @@ class Client:
     self.params: Dict[str,DataType]  = self.inv.loadParams()
     #print(params)
     self.cui: ConsoleUi              = ConsoleUi()
-    self.client: TelegramClient      = TelegramClient('anon', self.params['apiId'], self.params['apiHash'])
+    self.client: TelegramClient      = TelegramClient('anon', self.params['apiId'], self.params['apiHash'],
+                                                      proxy=self.params['proxy'])
     print("connected to Telegram")
+    if self.params['proxy'] is not None :  print(f" via proxy {self.params['proxyString']}")
     self.cli: Cli                    = Cli(self.inv, self.params, self.client)
 
   def startUp(self) -> None:

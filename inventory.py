@@ -22,6 +22,8 @@ class Inventory:
     'isLinux'      : platform.system() == 'Linux',
     'apiId'        : 0,
     'apiHash'      : '',
+    'proxy'        : None,
+    'proxyString'  : "",
     'maxMessages'  : 20,
     'helpFile'     : 'help.txt',
     'downloadPath' : 'Downloads/',
@@ -193,6 +195,13 @@ class Inventory:
       res[i] = paramsRead[i] if i in paramsRead else self.defaultParams[i]
     if res['apiId'] == 0 or len(res['apiHash']) == 0:
       raise MyException(f"You must provide real apiId and apiHash in the file {self.paramsFile}")
+    if isinstance(res['proxy'], list):
+      if res['proxy'][0] != "SOCKS5":
+        raise MyException(f"Unsupported proxy type {res['proxy'][0]}")
+      res['proxyString'] = f"{res['proxy'][0]}://{res['proxy'][1]} : {res['proxy'][2]}"
+      #import socks
+      #res['proxy'][0] = socks.SOCKS5  # just "SOCKS5" also will do
+
     self.params = res
     return res
   

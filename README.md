@@ -15,18 +15,18 @@ Installation:
         sudo apt install software-properties-common
         sudo add-apt-repository ppa:deadsnakes/ppa
         sudo apt update
-        sudo apt install python3.9 python3.9-venv
+        sudo apt install python3.10 python3.10-venv
 
 - download the app folder with files
 
 - create a virtual environment and install dependencies
 
         cd telegram_desktop
-        python3.9 -m venv venv
+        python3.10 -m venv venv
         source venv/bin/activate
-        python --version      # 3.9.*
+        python --version      # 3.10.*
         python -m pip install --upgrade pip
-        python -m pip --version       # >= 23.2
+        python -m pip --version       # >= 26.0
         python -m pip install -r freeze.txt
         deactivate
 
