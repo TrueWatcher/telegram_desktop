@@ -13,6 +13,7 @@ https://github.com/TrueWatcher/telegram_desktop
 1.11.0 12.11.2023 adapted to Windows 10
 1.11.1 14.07.2025 added setup.sh and note on python3.12
 1.12.0 11.03.2026 added socks5 proxy capability, pysocks module, updated telethon
+1.13.0 01.04.2026 updated libraries, works with Python 3.12.3
 """
 from telethon import TelegramClient, events
 import asyncio
