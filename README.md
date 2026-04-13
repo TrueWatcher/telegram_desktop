@@ -5,9 +5,10 @@ It provides two user interfaces:
 - console interface, with basic message handling from a terminal window and keyboard, intended for rapid sharing of files and links over Telegram ([screnshot 1](screenshots/tgtlc_1_8_2_dialog_message.png))
 - web interface, exposed at http://localhost:8080/index.html is more colourful and supports also features like read receipts and reply-to
 
-The app has been tested with Python 3.9 on Ubuntu 20.04, Linux Mint DE 5 and Windows 10.
-With Ubuntu 24.04, it fails to install with the native Python 3.12, but works normally with 3.10.
+The app has been tested with Python 3.9 on Ubuntu 20.04, Linux Mint DE 5 and Windows 10, and with Python 3.12 on Ubuntu 24.04.
 Web UI tested with Chromium and Firefox, recent as of 2023-2025. Not tested (yet) on Windows < 10 or MacOS.
+
+Since v1.13.1 it works with socks5 proxies, including IPv6.
 
 Installation:
 - make sure you have Python >= 3.8 installed
@@ -43,7 +44,7 @@ Installation:
 - now run it !
 
         cd telegram_desktop
-        venv/bin/python3.9 client.py
+        venv/bin/python client.py
 
   in the terminal window you will be prompted to enter your phone number, confirmation code (sent to your other Telegram device), and password (if you have 2FA). After successful login, your credentials will be stored in a file and not asked for agatn. To logout, just delete the session file.
 
