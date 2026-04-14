@@ -197,7 +197,7 @@ class Inventory:
     if res['apiId'] == 0 or len(res['apiHash']) == 0:
       raise MyException(f"You must provide real apiId and apiHash in the file {self.paramsFile}")
     if isinstance(res['proxy'], list):
-      if res['proxy'][0] != "SOCKS5":
+      if res['proxy'][0] != "SOCKS5" and res['proxy'][0] != "socks5":
         raise MyException(f"Unsupported proxy type {res['proxy'][0]}")
       res['proxyString'] = f"{res['proxy'][0]}://{res['proxy'][1]}:{res['proxy'][2]}"
       l = len(res['proxy'])
@@ -205,25 +205,12 @@ class Inventory:
         res['proxyString'] = res['proxy'][4] + '@' + res['proxyString']
       elif l != 3 and l != 4:
         raise MyException(f"Unsupported proxy params number {l}")
-      res['proxy'] = self.repackProxy(res['proxy'])
+      # ensure python_socks is present
+      res['proxy'][0] = python_socks.ProxyType.SOCKS5
+      # RTFM https://deepwiki.com/LonamiWebs/Telethon/7.3-proxy-support-and-configuration
 
     self.params = res
     return res
-
-  def repackProxy(self, proxyList: list) -> dict:
-  # drom pysocks list to python_socks dict
-    r = {
-    'proxy_type': python_socks.ProxyType.SOCKS5,
-    'addr': proxyList[1],
-    'port': proxyList[2]
-    }
-    l = len(proxyList)
-    if l>3:
-      r['rdns'] = proxyList[3]
-    if l == 6:
-      r['username'] = proxyList[4]
-      r['password'] = proxyList[5]
-    return r
 
   def i2dn(self, i: int) -> str:
     assert i >= 0 and i < len(self.dialogs)

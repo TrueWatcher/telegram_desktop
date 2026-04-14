@@ -16,6 +16,7 @@ https://github.com/TrueWatcher/telegram_desktop
 1.13.0 01.04.2026 updated libraries, works with Python 3.12.3
 1.13.1 13.04.2026 migrated to python_socks for ipv6 proxy support
 1.13.2 14.04.2026 fixed usernames in channels
+1.13.3 14.04.2026 cleanup
 """
 from telethon import TelegramClient, events
 import asyncio
